@@ -51,6 +51,8 @@ CREATE TABLE `articles` (
 	PRIMARY KEY (`id`) USING BTREE,
 	INDEX `FK_articles_users` (`user_id`) USING BTREE,
 	INDEX `start_date_end_date` (`start_date`, `end_date`) USING BTREE,
+	INDEX `id_title_content_start_date_end_date` (`start_date`, `end_date`, `title`, `content`, `id`) USING BTREE,
+	INDEX `id_title_content` (`title`, `content`, `id`) USING BTREE,
 	CONSTRAINT `FK_articles_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION ON DELETE NO ACTION
 )
 ```
