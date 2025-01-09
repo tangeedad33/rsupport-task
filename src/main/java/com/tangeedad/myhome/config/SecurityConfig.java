@@ -28,7 +28,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register","/api/**").permitAll() // 허용된 경로
+                        .requestMatchers("/login", "/register","/api/**").permitAll()
                         .anyRequest().authenticated() // 나머지는 인증 필요
                 ).addFilterBefore(new com.tangeedad.myhome.filter.JwtAuthenticationFilter(jwtUtil)
                         , UsernamePasswordAuthenticationFilter.class);
