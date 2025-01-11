@@ -1,6 +1,7 @@
 package com.tangeedad.myhome.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.tangeedad.myhome.entity.Article;
 import com.tangeedad.myhome.entity.User;
 import com.tangeedad.myhome.service.BoardService;
@@ -87,7 +88,8 @@ class BoardApiControllerTest {
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Test Article"));
+                .andExpect(jsonPath("$[0].title").value("Test Article"))
+                .andExpect(jsonPath("$[0].content").value("Test Content"));
     }
 
     /**
@@ -105,7 +107,8 @@ class BoardApiControllerTest {
         mockMvc.perform(get("/api/articles/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("Test Article"));
+                .andExpect(jsonPath("$.title").value("Test Article"))
+                .andExpect(jsonPath("$.content").value("Test Content"));
     }
 
     /**
@@ -138,7 +141,8 @@ class BoardApiControllerTest {
                         .file(filePart)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer test-token"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("New Article"));
+                .andExpect(jsonPath("$.title").value("New Article"))
+                .andExpect(jsonPath("$.content").value("New Content"));
     }
 
     /**

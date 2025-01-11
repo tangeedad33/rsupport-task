@@ -1,6 +1,6 @@
 package com.tangeedad.myhome.controller;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.tangeedad.myhome.dto.UserDto;
 import com.tangeedad.myhome.entity.User;
 import com.tangeedad.myhome.service.UserService;
 import jakarta.validation.Valid;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * UserApiController 클래스는 사용자(user) 관련 API를 제공하는 REST 컨트롤러입니다.
@@ -38,7 +39,7 @@ public class UserApiController {
      * @return 사용자 목록과 상태 코드
      */
     @GetMapping
-    public ResponseEntity<List<User>> getUsers(
+    public ResponseEntity<List<UserDto>> getUsers(
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String method) {
 
@@ -54,7 +55,9 @@ public class UserApiController {
             } else {
                 users = userService.findUsersByUsername(username);
             }
-            return ResponseEntity.ok(users);
+            // Convert User entities to UserDto
+            List<UserDto> userDtos = users.stream().map(UserDto::new).collect(Collectors.toList());
+            return ResponseEntity.ok(userDtos);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
@@ -67,14 +70,11 @@ public class UserApiController {
      * @return 사용자 정보와 상태 코드
      */
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         try {
             Optional<User> user = userService.getUserById(id);
-            if (user.isPresent()) {
-                return ResponseEntity.ok(user.get());
-            } else {
-                return ResponseEntity.notFound().build();
-            }
+            return user.map(value -> ResponseEntity.ok(new UserDto(value)))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -83,18 +83,23 @@ public class UserApiController {
     /**
      * 사용자 생성 API
      *
-     * @param user 생성할 사용자 정보
+     * @param userDto 생성할 사용자 정보
      * @return 생성된 사용자 정보와 상태 코드
      */
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        if (userService.getUserByUsername(user.getUsername()) != null) {
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
+        if (userService.getUserByUsername(userDto.getUsername()) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 사용자 이름 중복
         }
 
         try {
+            User user = new User();
+            user.setUsername(userDto.getUsername());
+            user.setPassword(userDto.getPassword()); // 비밀번호 암호화는 UserService에서 처리
+            user.setEnabled(userDto.isEnabled());
+
             User savedUser = userService.saveUser(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new UserDto(savedUser));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         } catch (Exception e) {
@@ -106,21 +111,21 @@ public class UserApiController {
      * 사용자 수정 API
      *
      * @param id 수정할 사용자 ID
-     * @param userDetails 수정할 사용자 정보
+     * @param userDto 수정할 사용자 정보
      * @return 수정된 사용자 정보와 상태 코드
      */
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
+    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserDto userDto) {
         try {
             Optional<User> optionalUser = userService.getUserById(id);
             if (optionalUser.isPresent()) {
                 User existingUser = optionalUser.get();
-                existingUser.setUsername(userDetails.getUsername());
-                existingUser.setPassword(userDetails.getPassword()); // 비밀번호 암호화 필요 시 추가 구현
-                existingUser.setEnabled(userDetails.isEnabled());
+                existingUser.setUsername(userDto.getUsername());
+                existingUser.setPassword(userDto.getPassword()); // 비밀번호 암호화는 UserService에서 처리
+                existingUser.setEnabled(userDto.isEnabled());
 
                 User updatedUser = userService.saveUser(existingUser);
-                return ResponseEntity.ok(updatedUser);
+                return ResponseEntity.ok(new UserDto(updatedUser));
             } else {
                 return ResponseEntity.notFound().build();
             }
@@ -150,4 +155,3 @@ public class UserApiController {
         }
     }
 }
-

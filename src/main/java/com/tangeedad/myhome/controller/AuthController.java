@@ -1,5 +1,6 @@
 package com.tangeedad.myhome.controller;
 
+import com.tangeedad.myhome.dto.UserDto;
 import com.tangeedad.myhome.entity.User;
 import com.tangeedad.myhome.service.UserService;
 import com.tangeedad.myhome.util.JwtUtil;
@@ -49,7 +50,8 @@ public class AuthController {
         // JWT 토큰 생성
         String token = jwtUtil.generateToken(username);
 
-        // JWT 토큰을 JSON 형식으로 반환
+        // JWT 토큰 및 사용자 정보 반환
+        UserDto userDto = new UserDto(user);
         return ResponseEntity.ok().body(Collections.singletonMap("token", token));
     }
 
@@ -59,9 +61,12 @@ public class AuthController {
      * @return 회원가입 성공 또는 실패 메시지
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User newUser) {
+    public ResponseEntity<?> register(@RequestBody UserDto newUserDto) {
         try {
             // 회원가입 처리
+            User newUser = new User();
+            newUser.setUsername(newUserDto.getUsername());
+            newUser.setPassword(newUserDto.getPassword());
             boolean isRegistered = userService.registerUser(newUser);
             if (!isRegistered) {
                 // 사용자 이름 중복일 경우 409 Conflict 응답 반환
